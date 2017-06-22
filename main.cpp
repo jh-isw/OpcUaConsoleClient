@@ -47,10 +47,11 @@ int main(int argc, const char** argv) {
     usage();
 
     UA_StatusCode retval;
+    bool isConnected = false;
 
     while(running){
         char * line = readline("> ");
-        if(!line) break;
+        // if(!line) break;
         if(*line) add_history(line);
 
         if(strcmp ( line, "c") == 0){
@@ -60,10 +61,18 @@ int main(int argc, const char** argv) {
                 free(line);
                 return (int)retval;
             }
+            isConnected = true;
         }
 
         else if(strcmp ( line, "d") == 0){
-            UA_Client_disconnect(client);
+            if(isConnected){
+                UA_Client_disconnect(client);
+                isConnected = false;
+            }
+            else {
+                cout << "no connection to disconnect" << endl;
+            }
+
         }
 
         else if(strcmp ( line, "g") == 0){
@@ -76,6 +85,9 @@ int main(int argc, const char** argv) {
                 UA_Client_delete(client);
                 free(line);
                 return (int)retval;
+            }
+            else {
+                isConnected = true;
             }
             printf("%i endpoints found\n", (int)endpointArraySize);
             for(size_t i=0;i<endpointArraySize;i++){
@@ -96,6 +108,7 @@ int main(int argc, const char** argv) {
         }
 
         else {
+            cout << "not a valid command" << endl;
             usage();
         }
 
