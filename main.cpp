@@ -45,20 +45,36 @@ int main(int argc, const char** argv) {
     UA_Client *client = UA_Client_new(UA_ClientConfig_standard);
 
     usage();
+
+    UA_StatusCode retval;
+
     while(running){
         char * line = readline("> ");
         if(!line) break;
         if(*line) add_history(line);
 
-        if(strcmp ( line, "g") == 0){
-//            getEndpoints(url);
+        if(strcmp ( line, "c") == 0){
+            retval = UA_Client_connect(client, url.c_str());
+            if(retval != UA_STATUSCODE_GOOD) {
+                UA_Client_delete(client);
+                free(line);
+                return (int)retval;
+            }
+        }
+
+        else if(strcmp ( line, "d") == 0){
+            UA_Client_disconnect(client);
+        }
+
+        else if(strcmp ( line, "g") == 0){
             UA_EndpointDescription* endpointArray = NULL;
             size_t endpointArraySize = 0;
-            UA_StatusCode retval = UA_Client_getEndpoints(client, url.c_str(),
+            retval = UA_Client_getEndpoints(client, url.c_str(),
                                                           &endpointArraySize, &endpointArray);
             if(retval != UA_STATUSCODE_GOOD) {
                 UA_Array_delete(endpointArray, endpointArraySize, &UA_TYPES[UA_TYPES_ENDPOINTDESCRIPTION]);
                 UA_Client_delete(client);
+                free(line);
                 return (int)retval;
             }
             printf("%i endpoints found\n", (int)endpointArraySize);
@@ -70,11 +86,16 @@ int main(int argc, const char** argv) {
             UA_Array_delete(endpointArray,endpointArraySize, &UA_TYPES[UA_TYPES_ENDPOINTDESCRIPTION]);
         }
 
-        if(strcmp ( line, "q") == 0){
+        else if(strcmp ( line, "q") == 0){
+            free(line);
             break;
         }
 
-        if(strcmp ( line, "u") == 0){
+        else if(strcmp ( line, "u") == 0){
+            usage();
+        }
+
+        else {
             usage();
         }
 
@@ -88,14 +109,11 @@ int main(int argc, const char** argv) {
 
 void usage() {
     const char *cmds = R"(
+    c:      connect
+    d:      disconnect
     g:      get Endpoints
     q:      quit
     u:      show usage
 )";
     std::cout << cmds << std::endl;
 }
-
-//void getEndpoints(string url){
-//    //char * msg = strcat("getEndpoints called on ", url.c_str()); TODO: produces segfault
-//    UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "getEndpoints called");
-//}
