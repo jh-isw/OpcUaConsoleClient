@@ -51,7 +51,23 @@ int main(int argc, const char** argv) {
         if(*line) add_history(line);
 
         if(strcmp ( line, "g") == 0){
-            getEndpoints(url);
+//            getEndpoints(url);
+            UA_EndpointDescription* endpointArray = NULL;
+            size_t endpointArraySize = 0;
+            UA_StatusCode retval = UA_Client_getEndpoints(client, url.c_str(),
+                                                          &endpointArraySize, &endpointArray);
+            if(retval != UA_STATUSCODE_GOOD) {
+                UA_Array_delete(endpointArray, endpointArraySize, &UA_TYPES[UA_TYPES_ENDPOINTDESCRIPTION]);
+                UA_Client_delete(client);
+                return (int)retval;
+            }
+            printf("%i endpoints found\n", (int)endpointArraySize);
+            for(size_t i=0;i<endpointArraySize;i++){
+                printf("URL of endpoint %i is %.*s\n", (int)i,
+                       (int)endpointArray[i].endpointUrl.length,
+                       endpointArray[i].endpointUrl.data);
+            }
+            UA_Array_delete(endpointArray,endpointArraySize, &UA_TYPES[UA_TYPES_ENDPOINTDESCRIPTION]);
         }
 
         if(strcmp ( line, "q") == 0){
@@ -79,7 +95,7 @@ void usage() {
     std::cout << cmds << std::endl;
 }
 
-void getEndpoints(string url){
-    //char * msg = strcat("getEndpoints called on ", url.c_str()); TODO: produces segfault
-    UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "getEndpoints called");
-}
+//void getEndpoints(string url){
+//    //char * msg = strcat("getEndpoints called on ", url.c_str()); TODO: produces segfault
+//    UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "getEndpoints called");
+//}
