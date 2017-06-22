@@ -26,7 +26,7 @@ int main(int argc, const char** argv) {
     po::options_description desc("Allowed options");
     desc.add_options()
             ("help", "produce help message")
-            ("url", po::value<string>()->default_value("opc.tcp://localhost:4840"), "set URL of the server to connect to")
+            ("url", po::value<string>()->default_value("opc.tcp://localhost:16664"), "set URL of the server to connect to")
             ;
 
     po::variables_map vm;
