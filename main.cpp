@@ -8,7 +8,7 @@
 using namespace std;
 namespace po = boost::program_options;
 
-void getEndpoints();
+void getEndpoints(string url);
 
 void usage();
 
@@ -33,17 +33,14 @@ int main(int argc, const char** argv) {
     po::store(po::parse_command_line(argc, argv, desc), vm);
     po::notify(vm);
 
+    string url = vm["url"].as<string>();
+
     if (vm.count("help")) {
         cout << desc << "\n";
         return 1;
     }
 
-    if (vm.count("url")) {
-        cout << "url is "
-             << vm["url"].as<string>() << ".\n";
-    } else {
-        cout << "url default used.\n";
-    }
+    cout << "url is " << url << "\n";
 
     UA_Client *client = UA_Client_new(UA_ClientConfig_standard);
 
@@ -54,7 +51,7 @@ int main(int argc, const char** argv) {
         if(*line) add_history(line);
 
         if(strcmp ( line, "g") == 0){
-            getEndpoints();
+            getEndpoints(url);
         }
 
         if(strcmp ( line, "q") == 0){
@@ -82,6 +79,7 @@ void usage() {
     std::cout << cmds << std::endl;
 }
 
-void getEndpoints(){
+void getEndpoints(string url){
+    //char * msg = strcat("getEndpoints called on ", url.c_str()); TODO: produces segfault
     UA_LOG_INFO(UA_Log_Stdout, UA_LOGCATEGORY_USERLAND, "getEndpoints called");
 }
