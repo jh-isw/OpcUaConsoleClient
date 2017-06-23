@@ -54,6 +54,7 @@ int main(int argc, const char** argv) {
         // if(!line) break;
         if(*line) add_history(line);
 
+        // connect
         if(strcmp ( line, "c") == 0){
             retval = UA_Client_connect(client, url.c_str());
             if(retval != UA_STATUSCODE_GOOD) {
@@ -64,17 +65,19 @@ int main(int argc, const char** argv) {
             isConnected = true;
         }
 
+        // disconnect
         else if(strcmp ( line, "d") == 0){
             if(isConnected){
                 UA_Client_disconnect(client);
                 isConnected = false;
             }
             else {
-                cout << "no connection to disconnect" << endl;
+                cout << "no active connection to disconnect" << endl;
             }
 
         }
 
+        // get Endpoints
         else if(strcmp ( line, "g") == 0){
             UA_EndpointDescription* endpointArray = NULL;
             size_t endpointArraySize = 0;
@@ -86,9 +89,7 @@ int main(int argc, const char** argv) {
                 free(line);
                 return (int)retval;
             }
-            else {
-                isConnected = true;
-            }
+
             printf("%i endpoints found\n", (int)endpointArraySize);
             for(size_t i=0;i<endpointArraySize;i++){
                 printf("URL of endpoint %i is %.*s\n", (int)i,
