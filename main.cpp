@@ -18,6 +18,18 @@ static void stopHandler(int sig) {
     running = false;
 }
 
+//static UA_StatusCode
+//nodeIter(UA_NodeId childId, UA_Boolean isInverse, UA_NodeId referenceTypeId, void *handle) {
+//    if(isInverse)
+//        return UA_STATUSCODE_GOOD;
+//    UA_NodeId *parent = (UA_NodeId *)handle;
+//    printf("%d, %d --- %d ---> NodeId %d, %d\n",
+//           parent->namespaceIndex, parent->identifier.numeric,
+//           referenceTypeId.identifier.numeric, childId.namespaceIndex,
+//           childId.identifier.numeric);
+//    return UA_STATUSCODE_GOOD;
+//}
+
 int main(int argc, const char** argv) {
     signal(SIGINT, stopHandler);
     signal(SIGTERM, stopHandler);
@@ -54,6 +66,46 @@ int main(int argc, const char** argv) {
         // if(!line) break;
         if(*line) add_history(line);
 
+        // browse
+        if(strcmp ( line, "b") == 0){
+            UA_BrowseRequest bReq;
+            UA_BrowseRequest_init(&bReq);
+            bReq.requestedMaxReferencesPerNode = 0;
+            bReq.nodesToBrowse = UA_BrowseDescription_new();
+            bReq.nodesToBrowseSize = 1;
+            bReq.nodesToBrowse[0].nodeId = UA_NODEID_NUMERIC(0, UA_NS0ID_ROOTFOLDER);
+            bReq.nodesToBrowse[0].resultMask = UA_BROWSERESULTMASK_ALL; /* return everything */
+            UA_BrowseResponse bResp = UA_Client_Service_browse(client, bReq);
+            printf("%-9s %-16s %-16s %-16s\n", "NAMESPACE", "NODEID", "BROWSE NAME", "DISPLAY NAME");
+            for (size_t i = 0; i < bResp.resultsSize; ++i) {
+                for (size_t j = 0; j < bResp.results[i].referencesSize; ++j) {
+                    UA_ReferenceDescription *ref = &(bResp.results[i].references[j]);
+                    if(ref->nodeId.nodeId.identifierType == UA_NODEIDTYPE_NUMERIC) {
+                        printf("%-9d %-16d %-16.*s %-16.*s\n", ref->nodeId.nodeId.namespaceIndex,
+                               ref->nodeId.nodeId.identifier.numeric, (int)ref->browseName.name.length,
+                               ref->browseName.name.data, (int)ref->displayName.text.length,
+                               ref->displayName.text.data);
+                    } else if(ref->nodeId.nodeId.identifierType == UA_NODEIDTYPE_STRING) {
+                        printf("%-9d %-16.*s %-16.*s %-16.*s\n", ref->nodeId.nodeId.namespaceIndex,
+                               (int)ref->nodeId.nodeId.identifier.string.length,
+                               ref->nodeId.nodeId.identifier.string.data,
+                               (int)ref->browseName.name.length, ref->browseName.name.data,
+                               (int)ref->displayName.text.length, ref->displayName.text.data);
+                    }
+                    /* TODO: distinguish further types */
+                }
+            }
+            UA_BrowseRequest_deleteMembers(&bReq);
+            UA_BrowseResponse_deleteMembers(&bResp);
+
+//            /* Same thing, this time using the node iterator... */
+//            UA_NodeId *parent = UA_NodeId_new();
+//            *parent = UA_NODEID_NUMERIC(0, UA_NS0ID_OBJECTSFOLDER);
+//            UA_Client_forEachChildNodeCall(client, UA_NODEID_NUMERIC(0, UA_NS0ID_OBJECTSFOLDER),
+//                                           nodeIter, (void *) parent);
+//            UA_NodeId_delete(parent);
+        }
+
         // connect
         if(strcmp ( line, "c") == 0){
             retval = UA_Client_connect(client, url.c_str());
@@ -63,6 +115,7 @@ int main(int argc, const char** argv) {
                 return (int)retval;
             }
             isConnected = true;
+            // TODO: message
         }
 
         // disconnect
@@ -123,6 +176,7 @@ int main(int argc, const char** argv) {
 
 void usage() {
     const char *cmds = R"(
+    b:      browse
     c:      connect
     d:      disconnect
     g:      get Endpoints
