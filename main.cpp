@@ -107,15 +107,21 @@ int main(int argc, const char** argv) {
         }
 
         // connect
-        if(strcmp ( line, "c") == 0){
-            retval = UA_Client_connect(client, url.c_str());
-            if(retval != UA_STATUSCODE_GOOD) {
-                UA_Client_delete(client);
-                free(line);
-                return (int)retval;
+        else if(strcmp ( line, "c") == 0){
+            if(!isConnected){
+                retval = UA_Client_connect(client, url.c_str());
+                if(retval != UA_STATUSCODE_GOOD) {
+                    UA_Client_delete(client);
+                    free(line);
+                    cout << "connect failed" << endl;
+                    return (int)retval;
+                }
+                isConnected = true;
+                cout << "connected to " << url << endl;
             }
-            isConnected = true;
-            // TODO: message
+            else{
+                cout << "you are already connected to " << url << endl;
+            }
         }
 
         // disconnect
@@ -123,6 +129,7 @@ int main(int argc, const char** argv) {
             if(isConnected){
                 UA_Client_disconnect(client);
                 isConnected = false;
+                cout << "you are now disconnected" << endl;
             }
             else {
                 cout << "no active connection to disconnect" << endl;
